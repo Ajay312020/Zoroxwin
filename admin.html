@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Zoroxwin</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <style>
+        * { box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background: #000; color: #fff; text-align: center; padding: 20px; }
+        .card { background: #111; padding: 20px; border-radius: 10px; max-width: 400px; margin: 20px auto; border: 2px solid #fff; }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #222; color: #fff; border: 1px solid #555; border-radius: 5px; }
+        button { width: 100%; padding: 12px; background: #fff; color: #000; font-weight: bold; font-size: 16px; border: none; cursor: pointer; border-radius: 5px; }
+        h1 { border-bottom: 1px solid #333; padding-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <h1>Zoroxwin Admin</h1>
+    
+    <div class="card">
+        <h3>App Stats</h3>
+        <p style="margin-top: 10px;">Total Registered Users: <b id="user-count" style="font-size: 20px; color: #00ff88;">0</b></p>
+    </div>
+
+    <div class="card">
+        <h3>Add ₹10 Play Code</h3>
+        <p style="margin-top: 5px; color: #aaa;">Current Stock: <b id="stock-10" style="color: #fff;">0</b></p>
+        <input type="text" id="input-10" placeholder="Enter ₹10 Code here">
+        <button onclick="addCode('10')">Add Code</button>
+    </div>
+
+    <div class="card">
+        <h3>Add ₹20 Play Code</h3>
+        <p style="margin-top: 5px; color: #aaa;">Current Stock: <b id="stock-20" style="color: #fff;">0</b></p>
+        <input type="text" id="input-20" placeholder="Enter ₹20 Code here">
+        <button onclick="addCode('20')">Add Code</button>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB4i257OXuYBjQJCG7KlusVMN0BjXzMzrY",
+            authDomain: "zoroxwin-a4b74.firebaseapp.com",
+            projectId: "zoroxwin-a4b74",
+            storageBucket: "zoroxwin-a4b74.firebasestorage.app",
+            messagingSenderId: "343806600744",
+            appId: "1:343806600744:web:a6c627a1f32e597e5a371d",
+            databaseURL: "https://zoroxwin-a4b74-default-rtdb.firebaseio.com/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Real-time Counters
+        db.ref('users').on('value', snap => {
+            document.getElementById('user-count').innerText = snap.numChildren();
+        });
+
+        db.ref('codes/10').on('value', snap => {
+            document.getElementById('stock-10').innerText = snap.numChildren();
+        });
+
+        db.ref('codes/20').on('value', snap => {
+            document.getElementById('stock-20').innerText = snap.numChildren();
+        });
+
+        // Upload Code Function
+        function addCode(type) {
+            let inputField = document.getElementById('input-'+type);
+            let code = inputField.value.trim();
+            
+            if(code !== "") {
+                db.ref('codes/'+type).push(code).then(() => {
+                    alert(`₹${type} Code added successfully!`);
+                    inputField.value = ''; // clear input
+                });
+            } else {
+                alert("Please enter a valid code.");
+            }
+        }
+    </script>
+</body>
+</html>

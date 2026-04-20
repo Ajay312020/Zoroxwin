@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoroxwin Rewards</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <style>
+        /* Black and White Theme */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { background-color: #000; color: #fff; text-align: center; }
+        .screen { display: none; padding: 20px; min-height: 100vh; }
+        .screen.active { display: block; }
+        
+        /* Splash Screen */
+        #splash-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; }
+        #splash-screen img { width: 120px; height: 120px; border-radius: 20px; border: 2px solid #fff; margin-bottom: 20px; background: #222; }
+        
+        /* UI Elements */
+        .card { border: 2px solid #fff; border-radius: 10px; padding: 20px; margin: 15px auto; max-width: 320px; background: #111; cursor: pointer; }
+        .btn { background: #fff; color: #000; border: none; padding: 12px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; border-radius: 5px; }
+        input { width: 100%; padding: 12px; margin-top: 10px; background: #222; color: #fff; border: 1px solid #555; border-radius: 5px; }
+        
+        .header { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #333; }
+        .emoji-icon { font-size: 60px; margin-bottom: 10px; user-select: none; }
+        .banner-ad { width: 320px; height: 50px; background: #222; border: 1px dashed #888; display: flex; align-items: center; justify-content: center; margin: 15px auto; color: #888; font-size: 12px; overflow: hidden; }
+        .status-text { color: #ccc; margin-top: 10px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div id="splash-screen" class="screen active">
+        <img src="splash.png" alt="Logo" onerror="this.src='https://via.placeholder.com/120/000000/FFFFFF?text=Zorox'">
+        <h2>Zoroxwin</h2>
+    </div>
+
+    <div id="auth-screen" class="screen">
+        <h2>Login / Sign Up</h2>
+        <div class="card" style="cursor: default;">
+            <input type="email" id="email" placeholder="Enter Email">
+            <input type="password" id="password" placeholder="Enter Password">
+            <button class="btn" onclick="login()">Login</button>
+            <button class="btn" style="background:#333; color:#fff" onclick="signup()">Sign Up</button>
+            <p id="auth-error" style="color:#ff4444; font-size:12px; margin-top:10px;"></p>
+        </div>
+    </div>
+
+    <div id="main-app" style="display:none">
+        
+        <div class="header">
+            <div>🪙 <span id="coins">0</span></div>
+            <button onclick="auth.signOut()" style="background:red; color:#fff; border:none; padding:5px 10px; border-radius:3px;">Logout</button>
+        </div>
+
+        <div id="dashboard" class="screen">
+            <h2>Dashboard</h2>
+            
+            <div class="card" onclick="switchScreen('egg-game')">
+                <div class="emoji-icon">🥚</div>
+                <h3>Egg Break</h3>
+                <p style="font-size:12px; color:#aaa;">Daily Plays: <span id="dash-egg">0</span>/20</p>
+            </div>
+            
+            <div class="banner-ad">Banner Ad Space</div>
+            
+            <div class="card" onclick="switchScreen('apple-game')">
+                <div class="emoji-icon">🍎</div>
+                <h3>Apple Cut</h3>
+                <p style="font-size:12px; color:#aaa;">Daily Plays: <span id="dash-apple">0</span>/20</p>
+            </div>
+
+            <div class="card" onclick="switchScreen('redeem-screen')">
+                <div class="emoji-icon">💳</div>
+                <h3>Redeem Code</h3>
+            </div>
+            
+            <div class="banner-ad">Banner Ad Space</div>
+        </div>
+
+        <div id="egg-game" class="screen">
+            <h2>Egg Break</h2>
+            <div class="card" style="cursor: default;">
+                <p>Clicks: <span id="egg-clicks">0</span>/5</p>
+                <div class="emoji-icon" onclick="playGame('egg')" id="egg-emoji" style="cursor:pointer;">🥚</div>
+                <button id="egg-ad-btn" class="btn" style="display:none" onclick="startVideoAd('egg')">Play Ad for 10 Coins</button>
+                <button class="btn" style="background:none; color:#fff; border:1px solid #fff" onclick="switchScreen('dashboard')">Back</button>
+            </div>
+            <div class="banner-ad">Banner Ad Space</div>
+        </div>
+
+        <div id="apple-game" class="screen">
+            <h2>Apple Cut</h2>
+            <div class="card" style="cursor: default;">
+                <p>Clicks: <span id="apple-clicks">0</span>/5</p>
+                <div class="emoji-icon" onclick="playGame('apple')" id="apple-emoji" style="cursor:pointer;">🍎</div>
+                <button id="apple-ad-btn" class="btn" style="display:none" onclick="startVideoAd('apple')">Play Ad for 10 Coins</button>
+                <button class="btn" style="background:none; color:#fff; border:1px solid #fff" onclick="switchScreen('dashboard')">Back</button>
+            </div>
+            <div class="banner-ad">Banner Ad Space</div>
+        </div>
+
+        <div id="ad-screen" class="screen">
+            <h2>Video Ad</h2>
+            <div style="height:200px; border:1px dashed #fff; margin:20px 0; display:flex; align-items:center; justify-content:center; background:#111;">
+                AD OPENED IN BROWSER
+            </div>
+            <h1 id="timer">Wait: 10s</h1>
+            <p class="status-text">Come back here to claim reward after ad.</p>
+            <button id="claim-btn" class="btn" style="display:none; background:#00ff88;" onclick="rewardUser()">Claim 10 Coins</button>
+        </div>
+
+        <div id="redeem-screen" class="screen">
+            <h2>Redeem Rewards</h2>
+            <div class="card" style="cursor: default;">
+                <h3>₹10 Play Code</h3>
+                <p>Cost: 1400 Coins</p>
+                <button class="btn" onclick="redeemCode('10', 1400)">Redeem</button>
+            </div>
+            <div class="card" style="cursor: default;">
+                <h3>₹20 Play Code</h3>
+                <p>Cost: 2600 Coins</p>
+                <button class="btn" onclick="redeemCode('20', 2600)">Redeem</button>
+            </div>
+            <div id="redeem-msg" style="margin-top: 15px; font-weight: bold; word-break: break-all;"></div>
+            <button class="btn" style="background:none; color:#fff; border:1px solid #fff" onclick="switchScreen('dashboard')">Back</button>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB4i257OXuYBjQJCG7KlusVMN0BjXzMzrY",
+            authDomain: "zoroxwin-a4b74.firebaseapp.com",
+            projectId: "zoroxwin-a4b74",
+            storageBucket: "zoroxwin-a4b74.firebasestorage.app",
+            messagingSenderId: "343806600744",
+            appId: "1:343806600744:web:a6c627a1f32e597e5a371d",
+            databaseURL: "https://zoroxwin-a4b74-default-rtdb.firebaseio.com/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+        
+        let userPath, userData = {}, currentClicks = 0, activeGameForAd = '';
+
+        // Auth State Check
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                userPath = 'users/' + user.uid;
+                document.getElementById('splash-screen').classList.remove('active');
+                document.getElementById('main-app').style.display = 'block';
+                
+                db.ref(userPath).on('value', snap => {
+                    let data = snap.val();
+                    if(!data) {
+                        data = { coins: 0, eggPlays: 0, applePlays: 0, lastDate: new Date().toDateString() };
+                        db.ref(userPath).set(data);
+                    }
+                    // Reset Daily Limits
+                    if(data.lastDate !== new Date().toDateString()) {
+                        data.eggPlays = 0; 
+                        data.applePlays = 0; 
+                        data.lastDate = new Date().toDateString();
+                        db.ref(userPath).update(data);
+                    }
+                    userData = data;
+                    updateUI();
+                });
+                switchScreen('dashboard');
+            } else {
+                document.getElementById('splash-screen').classList.remove('active');
+                document.getElementById('main-app').style.display = 'none';
+                switchScreen('auth-screen');
+            }
+        });
+
+        // Auth Functions
+        function signup() {
+            let e = document.getElementById('email').value;
+            let p = document.getElementById('password').value;
+            auth.createUserWithEmailAndPassword(e, p).catch(err => document.getElementById('auth-error').innerText = err.message);
+        }
+
+        function login() {
+            let e = document.getElementById('email').value;
+            let p = document.getElementById('password').value;
+            auth.signInWithEmailAndPassword(e, p).catch(err => document.getElementById('auth-error').innerText = err.message);
+        }
+
+        // Navigation & UI Updates
+        function switchScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            
+            // Reset games when switching
+            currentClicks = 0;
+            document.getElementById('egg-clicks').innerText = '0';
+            document.getElementById('apple-clicks').innerText = '0';
+            document.getElementById('egg-emoji').innerText = '🥚';
+            document.getElementById('apple-emoji').innerText = '🍎';
+            document.getElementById('egg-ad-btn').style.display = 'none';
+            document.getElementById('apple-ad-btn').style.display = 'none';
+            document.getElementById('redeem-msg').innerText = '';
+        }
+
+        function updateUI() {
+            document.getElementById('coins').innerText = userData.coins || 0;
+            document.getElementById('dash-egg').innerText = userData.eggPlays || 0;
+            document.getElementById('dash-apple').innerText = userData.applePlays || 0;
+        }
+
+        // Game Logic
+        function playGame(type) {
+            let plays = userData[type+'Plays'] || 0;
+            if(plays >= 20) {
+                alert("Daily limit (20) reached! Try again tomorrow.");
+                return;
+            }
+
+            if(currentClicks < 5) {
+                currentClicks++; 
+                document.getElementById(type+'-clicks').innerText = currentClicks;
+                
+                if(currentClicks >= 5) {
+                    document.getElementById(type+'-emoji').innerText = type === 'egg' ? '🍳' : '🍏';
+                    document.getElementById(type+'-ad-btn').style.display = 'block';
+                }
+            }
+        }
+
+        // Monetag Video Ad Integration
+        function startVideoAd(type) {
+            activeGameForAd = type; 
+            switchScreen('ad-screen');
+
+            // Monetag Direct Link
+            let monetagSmartLink = "https://omg10.com/4/10902481"; 
+            window.open(monetagSmartLink, "_blank"); // Opens Ad in new tab/browser
+
+            // 10 Second Timer
+            document.getElementById('claim-btn').style.display = 'none';
+            let sec = 10;
+            document.getElementById('timer').innerText = `Wait: ${sec}s`;
+            
+            let t = setInterval(() => {
+                sec--; 
+                document.getElementById('timer').innerText = `Wait: ${sec}s`;
+                if(sec <= 0) { 
+                    clearInterval(t); 
+                    document.getElementById('timer').innerText = "Ad Finished!";
+                    document.getElementById('claim-btn').style.display = 'block'; 
+                }
+            }, 1000);
+        }
+
+        function rewardUser() {
+            let currentPlays = userData[activeGameForAd+'Plays'] || 0;
+            db.ref(userPath).update({ 
+                coins: (userData.coins || 0) + 10, 
+                [activeGameForAd+'Plays']: currentPlays + 1 
+            });
+            alert("10 Coins Added Successfully!"); 
+            switchScreen('dashboard');
+        }
+
+        // Auto Redeem Logic
+        async function redeemCode(type, cost) {
+            let resultBox = document.getElementById('redeem-msg');
+            if((userData.coins || 0) < cost) {
+                resultBox.innerHTML = `<span style="color:#ff4444">Not enough coins! Need ${cost}</span>`;
+                return;
+            }
+
+            const snap = await db.ref('codes/'+type).limitToFirst(1).once('value');
+            if(!snap.exists()) {
+                resultBox.innerHTML = `<span style="color:#ffaa00">Stock empty! Admin will add codes soon.</span>`;
+                return;
+            }
+
+            const key = Object.keys(snap.val())[0];
+            const code = snap.val()[key];
+            
+            // Deduct Coins and Remove Code from DB
+            await db.ref('codes/'+type+'/'+key).remove();
+            await db.ref(userPath).update({ coins: userData.coins - cost });
+            
+            resultBox.innerHTML = `<span style="color:#00ff88">Success! Your Code:<br>${code}</span>`;
+        }
+    </script>
+</body>
+</html>
